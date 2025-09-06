@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
-import { GraduationCap, LogOut, User, BookOpen } from "lucide-react";
+import { GraduationCap, LogOut, User, BookOpen, Shield, UserCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,14 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, switchRole } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleRoleSwitch = (newRole: 'admin' | 'student') => {
+    switchRole(newRole);
+    toast.success(`Switched to ${newRole} mode`);
+    navigate(newRole === 'admin' ? '/admin' : '/dashboard');
   };
 
   return (
@@ -55,18 +63,64 @@ export function Navbar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 glass">
                     <DropdownMenuLabel>
-                      <div>
+                      <div className="space-y-1">
                         <p className="font-medium">{user?.name}</p>
                         <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <Badge variant={user?.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
+                          {user?.role === 'admin' ? (
+                            <>
+                              <Shield className="mr-1 h-3 w-3" />
+                              Admin
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="mr-1 h-3 w-3" />
+                              Student
+                            </>
+                          )}
+                        </Badge>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {user?.role === 'student' && (
-                      <DropdownMenuItem onClick={() => navigate('/my-courses')}>
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        My Courses
-                      </DropdownMenuItem>
+                    
+                    {/* Role Switcher */}
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Switch Role</DropdownMenuLabel>
+                    <DropdownMenuItem 
+                      onClick={() => handleRoleSwitch('admin')}
+                      disabled={user?.role === 'admin'}
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      Admin Mode
+                      {user?.role === 'admin' && <span className="ml-auto text-xs">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleRoleSwitch('student')}
+                      disabled={user?.role === 'student'}
+                    >
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Student Mode
+                      {user?.role === 'student' && <span className="ml-auto text-xs">✓</span>}
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    {/* Role-based options */}
+                    {user?.role === 'admin' ? (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/admin')}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          My Dashboard
+                        </DropdownMenuItem>
+                      </>
                     )}
+                    
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       Profile

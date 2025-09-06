@@ -7,6 +7,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (email: string, password: string, name: string) => Promise<void>;
+  switchRole: (role: 'admin' | 'student') => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -44,6 +45,15 @@ export const useAuth = create<AuthState>((set) => ({
     
     set({ user: newUser, isAuthenticated: true });
     localStorage.setItem('user', JSON.stringify(newUser));
+  },
+  
+  switchRole: (role: 'admin' | 'student') => {
+    const currentUser = useAuth.getState().user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, role };
+      set({ user: updatedUser });
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
   },
 }));
 
